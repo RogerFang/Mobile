@@ -12,6 +12,7 @@ target/*
 logs/*
 out
 logs/*
+tmp/*
 
 
 
