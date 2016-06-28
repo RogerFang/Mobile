@@ -1,0 +1,18 @@
+# Package Files #
+*.iml
+
+## Directory-based project format:
+.idea/*
+.idea/workspace.xml
+*.jar
+*.war
+*.ear
+target/*
+*.iml
+logs/*
+out
+logs/*
+
+
+
+
