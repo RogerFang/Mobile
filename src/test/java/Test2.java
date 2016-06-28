@@ -11,6 +11,11 @@ import java.nio.channels.FileChannel;
  * Created by Roger on 2016/6/28.
  */
 public class Test2 {
+    @Test
+    public void forfun(){
+        String s = "aa.txt";
+        System.out.println(s.split("\\.")[1]);
+    }
 
     @Test
     public void test() throws FileNotFoundException {

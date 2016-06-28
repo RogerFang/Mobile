@@ -98,7 +98,9 @@ public class ExSort {
         // 合并文件writer流
         File mergeFile = getMergeFile();
         BufferedWriter bw = new BufferedWriter(new FileWriter(mergeFile));
-        //TODO
+
+        // 循环读取有序的子文件
+
     }
 
     private List<File> doSplitFileData(FileChannel fcin){
