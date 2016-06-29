@@ -11,17 +11,29 @@ import java.util.*;
  */
 public class PreprocessService {
 
+    private static PreprocessService instance = new PreprocessService();
+
     private boolean isTrain = true;
-    private boolean isClassification = false;
+    private boolean isClassification = true;
+
+    private PreprocessService(){
+    }
+
+    public static PreprocessService getInstance(){
+        return instance;
+    }
 
     /**
      * 传入原始的大数据文件
-     * @param fileList
+     *
+     * @param fileList 大数据文件列表
+     * @return 返回大数据文件集的交集记录
      */
-    public void genData(List<File> fileList) throws IOException {
+    public File genData(List<File> fileList) throws IOException {
         List<File> sortedFileList = exSort(fileList);
         File interFile = genInterData(sortedFileList);
         System.out.println("inter file:" + interFile.getName());
+        return interFile;
     }
 
     /**
@@ -115,6 +127,11 @@ public class PreprocessService {
                 br.close();
             }
         }
+
+        for (File file: sortedFileList){
+            file.delete();
+        }
+
         return interFile;
     }
 
@@ -198,7 +215,7 @@ public class PreprocessService {
                 singleLineFeature.add(tmp);
             }
 
-            if (count==props.length-1){
+            if (count == lines.size()-1){
                 if (isTrain){
                     // train&test
                     if (isClassification){
@@ -206,7 +223,6 @@ public class PreprocessService {
                         if (props[2].equals("在网-开通")){
                             linesFeatureRecord.add("1");
                         }else{
-//                            System.out.println(perMonthFeatureList.get(2) + "\t" + record.get(monthNum));
                             linesFeatureRecord.add("0");
                         }
                     }else {
@@ -268,6 +284,11 @@ public class PreprocessService {
         return null;
     }
 
+    /**
+     * 针对传入的文件列表分别进行外部排序
+     * @param bigDataFileList
+     * @return
+     */
     private List<File> exSort(List<File> bigDataFileList){
         List<File> sortedFileList = new ArrayList<>();
         for (File originFile: bigDataFileList){
@@ -276,6 +297,21 @@ public class PreprocessService {
         return sortedFileList;
     }
 
+    public boolean isTrain() {
+        return isTrain;
+    }
+
+    public void setIsTrain(boolean isTrain) {
+        this.isTrain = isTrain;
+    }
+
+    public boolean isClassification() {
+        return isClassification;
+    }
+
+    public void setIsClassification(boolean isClassification) {
+        this.isClassification = isClassification;
+    }
 
     public static void main(String[] args) throws IOException {
         PreprocessService preprocessService = new PreprocessService();
