@@ -1,6 +1,7 @@
 package service;
 
 import org.apache.commons.lang3.StringUtils;
+import props.ConfigProps;
 import util.FileUtil;
 
 import java.io.*;
@@ -12,12 +13,10 @@ import java.util.List;
  */
 public class GenTrainService {
 
+    private static ConfigProps configProps = ConfigProps.getInstance();
+
     // 大数据文件交集进行拆分后的子文件记录数
-    public static final int PER_FILE_COUNT = 30000;
-    // 训练train特征数据根目录
-    private static final String TRAIN_DIR = "train";
-    // 训练test特征数据根目录
-    private static final String TEST_DIR = "test";
+    public static final int FEATURE_SINGLE_FILE_COUNT = Integer.parseInt(configProps.getProp("FEATURE_SINGLE_FILE_COUNT"));
 
     // 本次训练train存放最终索引特征数据的目录
     private String trainDirForThisTime;
@@ -27,15 +26,6 @@ public class GenTrainService {
     private PreprocessService preprocessService = PreprocessService.getInstance();
 
     private GenTrainService(){
-        File trainDir = new File(TRAIN_DIR);
-        if (!trainDir.exists()){
-            trainDir.mkdirs();
-        }
-
-        File testDir = new File(TEST_DIR);
-        if (!testDir.exists()){
-            testDir.mkdirs();
-        }
     }
 
     private void genMultiMonth(List<String> months, boolean isClassification){
@@ -95,7 +85,7 @@ public class GenTrainService {
                     bwTest.write(line);
                     bwTest.newLine();
                     countTest++;
-                    if (countTest >= PER_FILE_COUNT){
+                    if (countTest >= FEATURE_SINGLE_FILE_COUNT){
                         bwTest.close();
                         indexTest++;
                         splitFileTest = FileUtil.getIndexSplitFile(testDirForThisTime, indexTest);
@@ -109,7 +99,7 @@ public class GenTrainService {
                     bwTrain.write(line);
                     bwTrain.newLine();
                     countTrain++;
-                    if (countTrain >= PER_FILE_COUNT){
+                    if (countTrain >= FEATURE_SINGLE_FILE_COUNT){
                         bwTrain.close();
                         indexTrain++;
                         splitFileTrain = FileUtil.getIndexSplitFile(trainDirForThisTime, indexTrain);
@@ -136,7 +126,7 @@ public class GenTrainService {
 
         BufferedWriter bwIndexTrain = new BufferedWriter(new FileWriter(trainDirForThisTime + File.separator + "index.txt"));
         bwIndexTrain.write("allCount:"+totalCountTrain);bwIndexTrain.newLine();
-        bwIndexTrain.write("perCount:"+PER_FILE_COUNT);bwIndexTrain.newLine();
+        bwIndexTrain.write("perCount:"+FEATURE_SINGLE_FILE_COUNT);bwIndexTrain.newLine();
         for (int i=0; i<splitFileRecordsTrain.size(); i++){
             bwIndexTrain.write(i+":"+splitFileRecordsTrain.get(i));
             bwIndexTrain.newLine();
@@ -148,7 +138,7 @@ public class GenTrainService {
 
         BufferedWriter bwIndexTest = new BufferedWriter(new FileWriter(testDirForThisTime + File.separator + "index.txt"));
         bwIndexTest.write("allCount:"+totalCountTest);bwIndexTest.newLine();
-        bwIndexTest.write("perCount:"+PER_FILE_COUNT);bwIndexTest.newLine();
+        bwIndexTest.write("perCount:"+FEATURE_SINGLE_FILE_COUNT);bwIndexTest.newLine();
         for (int i=0; i<splitFileRecordsTest.size(); i++){
             bwIndexTest.write(i+":"+splitFileRecordsTest.get(i));
             bwIndexTest.newLine();

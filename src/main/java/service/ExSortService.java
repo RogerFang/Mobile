@@ -1,6 +1,7 @@
 package service;
 
 import org.apache.commons.lang3.StringUtils;
+import props.ConfigProps;
 import util.FileUtil;
 
 import java.io.*;
@@ -13,25 +14,23 @@ public class ExSortService {
 
     private static ExSortService instance = new ExSortService();
 
+    private static ConfigProps configProps = ConfigProps.getInstance();
+
     // 单个子文件的记录数
-    private static final int SINGLE_FILE_COUNT = 10000 * 3;
+    private static final int EXSORT_SINGLE_FILE_COUNT = Integer.parseInt(configProps.getProp("EXSORT_SINGLE_FILE_COUNT"));
 
     // 从大数据文件中, 一次缓冲读取的字节数(10M)
-    private static final int BUFFER_SIZE = 1024 * 1024 * 1;
+    // private static final int BUFFER_SIZE = 1024 * 1024 * 1;
 
     // 存储子文件的临时目录
-    private static final String TMP_DIR = "tmp";
+    // private static final String TMP_DIR = "tmp";
 
     // 存储单行的字节数
-    private static final int LINE_SIZE = 2000;
+    // private static final int LINE_SIZE = 2000;
 
-    private static final String FILE_EXTENSION = ".txt";
+    // private static final String FILE_EXTENSION = ".txt";
 
     private ExSortService() {
-        File tmpFile = new File(TMP_DIR);
-        if (!tmpFile.exists()){
-            tmpFile.mkdirs();
-        }
     }
 
     public static ExSortService getInstance(){
@@ -65,7 +64,7 @@ public class ExSortService {
         splitFileList.add(splitFile);
         while ((line = br.readLine()) != null){
             // 超出规定的子文件行数就新建一个子文件
-            if (lineCount >= SINGLE_FILE_COUNT){
+            if (lineCount >= EXSORT_SINGLE_FILE_COUNT){
                 bw.close();
                 splitFile = FileUtil.getSplitFile();
                 bw = new BufferedWriter(new FileWriter(splitFile));

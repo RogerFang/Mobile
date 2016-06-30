@@ -1,6 +1,7 @@
 package service;
 
 import org.apache.commons.lang3.StringUtils;
+import props.ConfigProps;
 import util.FileUtil;
 
 import java.io.*;
@@ -12,10 +13,10 @@ import java.util.List;
  */
 public class GenPredictService {
 
+    private static ConfigProps configProps = ConfigProps.getInstance();
+
     // 大数据文件交集进行拆分后的子文件记录数
-    public static final int PER_FILE_COUNT = 30000;
-    // 预测特征数据根目录
-    private static final String PREDICT_DIR = "predict";
+    public static final int FEATURE_SINGLE_FILE_COUNT = Integer.parseInt(configProps.getProp("FEATURE_SINGLE_FILE_COUNT"));
 
     // 本次预测存放最终索引特征数据的目录
     private String predictDirForThisTime;
@@ -23,10 +24,6 @@ public class GenPredictService {
     private PreprocessService preprocessService = PreprocessService.getInstance();
 
     private GenPredictService(){
-        File dir = new File(PREDICT_DIR);
-        if (!dir.exists()){
-            dir.mkdirs();
-        }
     }
 
     public void genMultiMonth(List<String> months){
@@ -67,7 +64,7 @@ public class GenPredictService {
                 bw.write(line);
                 bw.newLine();
                 count++;
-                if (count >= PER_FILE_COUNT){
+                if (count >= FEATURE_SINGLE_FILE_COUNT){
                     bw.close();
                     index++;
                     splitFile = FileUtil.getIndexSplitFile(predictDirForThisTime, index);
@@ -88,7 +85,7 @@ public class GenPredictService {
 
         BufferedWriter bwIndex = new BufferedWriter(new FileWriter(predictDirForThisTime + File.separator + "index.txt"));
         bwIndex.write("allCount:"+allCount);bwIndex.newLine();
-        bwIndex.write("perCount:"+PER_FILE_COUNT);bwIndex.newLine();
+        bwIndex.write("perCount:"+FEATURE_SINGLE_FILE_COUNT);bwIndex.newLine();
         for (int i=0; i<splitFileRecords.size(); i++){
             bwIndex.write(i+":"+splitFileRecords.get(i));
             bwIndex.newLine();
