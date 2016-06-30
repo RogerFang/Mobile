@@ -192,9 +192,9 @@ public class ExSortService {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         ExSortService exSortService = new ExSortService();
         File bigDataFile = new File("201412.txt");
         exSortService.sort(bigDataFile);
-    }
+    }*/
 }

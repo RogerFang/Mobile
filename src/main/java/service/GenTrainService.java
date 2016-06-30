@@ -12,6 +12,7 @@ import java.util.List;
  * Created by Roger on 2016/6/29.
  */
 public class GenTrainService {
+    private static GenTrainService instance = new GenTrainService();
 
     private static ConfigProps configProps = ConfigProps.getInstance();
 
@@ -28,7 +29,11 @@ public class GenTrainService {
     private GenTrainService(){
     }
 
-    private void genMultiMonth(List<String> months, boolean isClassification){
+    public static GenTrainService getInstance(){
+        return instance;
+    }
+
+    public void genMultiMonth(List<String> months, boolean isClassification){
         List<File> files = new ArrayList<File>();
         for (String month: months){
             files.add(new File(month));
@@ -168,7 +173,7 @@ public class GenTrainService {
         return testDirForThisTime;
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         List<String> files = new ArrayList<>();
         files.add("201408.txt");
         files.add("201409.txt");
@@ -176,5 +181,5 @@ public class GenTrainService {
         genTrainService.genMultiMonth(files, true);
         System.out.println(genTrainService.getTrainDirForThisTime());
         System.out.println(genTrainService.getTestDirForThisTime());
-    }
+    }*/
 }

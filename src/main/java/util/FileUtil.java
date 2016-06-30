@@ -24,9 +24,10 @@ public class FileUtil {
     // 日志目录
     private static final String LOG_DIR = configProps.getProp("LOG_DIR");
 
-
     // 文件扩展名
     private static final String FILE_EXTENSION = ".txt";
+    // log文件扩展名
+    private static final String LOG_EXTENSION = ".log";
 
     /**
      * 获取子文件
@@ -95,6 +96,15 @@ public class FileUtil {
      */
     public static File makeTestDirForEveryTime(String dirName){
         return makieDirForEveryTime(TEST_DIR, dirName);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public static File getLogFile(String logFileName){
+        checkDirExists(LOG_DIR);
+        return new File(LOG_DIR + File.separator + logFileName + LOG_EXTENSION);
     }
 
     private static File makieDirForEveryTime(String parentDir, String dirName){

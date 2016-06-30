@@ -12,6 +12,7 @@ import java.util.List;
  * Created by Roger on 2016/6/29.
  */
 public class GenPredictService {
+    private static GenPredictService instance = new GenPredictService();
 
     private static ConfigProps configProps = ConfigProps.getInstance();
 
@@ -26,8 +27,11 @@ public class GenPredictService {
     private GenPredictService(){
     }
 
+    public static GenPredictService getInstance(){
+        return instance;
+    }
+
     public void genMultiMonth(List<String> months){
-        String dataPath = null;
         List<File> files = new ArrayList<File>();
         for (String month: months){
             files.add(new File(month));
@@ -114,12 +118,12 @@ public class GenPredictService {
         return predictDirForThisTime;
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         List<String> files = new ArrayList<>();
         files.add("201408.txt");
         files.add("201409.txt");
         GenPredictService genPredictService = new GenPredictService();
         genPredictService.genMultiMonth(files);
         System.out.println(genPredictService.getPredictDirForThisTime());
-    }
+    }*/
 }

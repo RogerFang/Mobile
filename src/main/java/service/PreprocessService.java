@@ -313,11 +313,11 @@ public class PreprocessService {
         this.isClassification = isClassification;
     }
 
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         PreprocessService preprocessService = new PreprocessService();
         List<File> fileList = new ArrayList<>();
         fileList.add(new File("201408.txt"));
         fileList.add(new File("201409.txt"));
         preprocessService.genData(fileList);
-    }
+    }*/
 }
