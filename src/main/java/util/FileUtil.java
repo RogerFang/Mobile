@@ -13,6 +13,10 @@ public class FileUtil {
     private static final String TMP_DIR = "tmp";
     // 预测特征数据根目录
     private static final String PREDICT_DIR = "predict";
+    // 训练train特征数据根目录
+    private static final String TRAIN_DIR = "train";
+    // 训练test特征数据根目录
+    private static final String TEST_DIR = "test";
     // 文件扩展名
     private static final String FILE_EXTENSION = ".txt";
 
@@ -49,12 +53,12 @@ public class FileUtil {
     }
 
     /**
-     * 获取预测特征索引文件
+     * 获取特征索引文件：预测、训练train、训练test
      * @param parentDir
      * @param index
      * @return
      */
-    public static File getPredictSplitFile(String parentDir, int index){
+    public static File getIndexSplitFile(String parentDir, int index){
         return new File(parentDir + File.separator + index + FILE_EXTENSION);
     }
 
@@ -64,14 +68,35 @@ public class FileUtil {
      * @return
      */
     public static File makePredictDirForEveryTime(String dirName){
-        File filePredict = new File(PREDICT_DIR + File.separator + dirName + File.separator);
-        if (!filePredict.exists()){
-            filePredict.mkdirs();
-        }else {
-            clearPath(filePredict);
-        }
+        return makieDirForEveryTime(PREDICT_DIR, dirName);
+    }
 
-        return filePredict;
+    /**
+     * 创建本次训练train数据索引文件存放目录
+     * @param dirName
+     * @return
+     */
+    public static File makeTrainDirForEveryTime(String dirName){
+        return makieDirForEveryTime(TRAIN_DIR, dirName);
+    }
+
+    /**
+     * 创建本次训练test数据索引文件存放目录
+     * @param dirName
+     * @return
+     */
+    public static File makeTestDirForEveryTime(String dirName){
+        return makieDirForEveryTime(TEST_DIR, dirName);
+    }
+
+    private static File makieDirForEveryTime(String parentDir, String dirName){
+        File file = new File(parentDir + File.separator + dirName + File.separator);
+        if (!file.exists()){
+            file.mkdirs();
+        }else {
+            clearPath(file);
+        }
+        return file;
     }
 
     /**

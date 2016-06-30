@@ -26,11 +26,11 @@ public class PreprocessService {
     /**
      * 传入原始的大数据文件
      *
-     * @param fileList 大数据文件列表
+     * @param bigDataFiles 大数据文件列表
      * @return 返回大数据文件集的交集记录
      */
-    public File genData(List<File> fileList) throws IOException {
-        List<File> sortedFileList = exSort(fileList);
+    public File genData(List<File> bigDataFiles) throws IOException {
+        List<File> sortedFileList = exSort(bigDataFiles);
         File interFile = genInterData(sortedFileList);
         System.out.println("inter file:" + interFile.getName());
         return interFile;

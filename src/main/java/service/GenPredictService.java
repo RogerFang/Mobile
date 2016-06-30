@@ -54,14 +54,14 @@ public class GenPredictService {
         List<String> splitFileRecords = new ArrayList<>();
         // 索引文件索引
         int index = 0;
-        File splitFile = FileUtil.getPredictSplitFile(predictDirForThisTime, index);
+        File splitFile = FileUtil.getIndexSplitFile(predictDirForThisTime, index);
         BufferedWriter bw = new BufferedWriter(new FileWriter(splitFile));
         splitFileRecords.add(splitFile.getName());
 
         int allCount = 0;
         // 用于切分文件的计数
         int count = 0;
-        String line = null;
+        String line;
         while ((line=br.readLine()) != null){
             if (StringUtils.isNotEmpty(line)){
                 bw.write(line);
@@ -70,7 +70,7 @@ public class GenPredictService {
                 if (count >= PER_FILE_COUNT){
                     bw.close();
                     index++;
-                    splitFile = FileUtil.getPredictSplitFile(predictDirForThisTime, index);
+                    splitFile = FileUtil.getIndexSplitFile(predictDirForThisTime, index);
                     bw = new BufferedWriter(new FileWriter(splitFile));
                     splitFileRecords.add(splitFile.getName());
                     count = 0;
