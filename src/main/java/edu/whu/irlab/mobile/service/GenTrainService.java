@@ -1,8 +1,10 @@
-package service;
+package edu.whu.irlab.mobile.service;
 
 import org.apache.commons.lang3.StringUtils;
-import props.ConfigProps;
-import util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.whu.irlab.mobile.props.ConfigProps;
+import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -12,6 +14,8 @@ import java.util.List;
  * Created by Roger on 2016/6/29.
  */
 public class GenTrainService {
+    private static Logger logger = LoggerFactory.getLogger(GenTrainService.class);
+
     private static GenTrainService instance = new GenTrainService();
 
     private static ConfigProps configProps = ConfigProps.getInstance();
@@ -33,7 +37,25 @@ public class GenTrainService {
         return instance;
     }
 
-    public void genMultiMonth(List<String> months, boolean isClassification){
+    /**
+     * 针对分类模型进行数据处理
+     * @param months
+     */
+    public void genClassification(List<String> months){
+        logger.info("Generate for edu.whu.irlab.mobile.Train Classification, file list size={}", months.size());
+        genMultiMonth(months, true);
+    }
+
+    /**
+     * 针对回归模型进行数据处理
+     * @param months
+     */
+    public void genRegression(List<String> months){
+        logger.info("Generate for edu.whu.irlab.mobile.Train Regression, file list size={}", months.size());
+        genMultiMonth(months, false);
+    }
+
+    private void genMultiMonth(List<String> months, boolean isClassification){
         List<File> files = new ArrayList<File>();
         for (String month: months){
             files.add(new File(month));
@@ -46,6 +68,7 @@ public class GenTrainService {
         }else {
             dirName = "regress_"+files.get(N-1).getName().split("\\.")[0]+"_"+(N-1);
         }
+
         makeTrainAndTestDirForEveryTime(dirName);
         try {
             genTrainAndTestData(files, isClassification);
@@ -163,6 +186,9 @@ public class GenTrainService {
         File fileTestForThisTime = FileUtil.makeTestDirForEveryTime(dirName);
         this.trainDirForThisTime = fileTrainForThisTime.getAbsolutePath();
         this.testDirForThisTime = fileTestForThisTime.getAbsolutePath();
+
+        logger.info("This time edu.whu.irlab.mobile.Train Index Dir is: {}", trainDirForThisTime);
+        logger.info("This time Test Index Dir is: {}", testDirForThisTime);
     }
 
     public String getTrainDirForThisTime() {

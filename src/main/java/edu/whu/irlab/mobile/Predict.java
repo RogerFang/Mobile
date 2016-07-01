@@ -1,6 +1,10 @@
-import command.Command;
-import service.GenPredictService;
-import util.FileUtil;
+package edu.whu.irlab.mobile;
+
+import edu.whu.irlab.mobile.command.Command;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.whu.irlab.mobile.service.GenPredictService;
+import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -10,11 +14,14 @@ import java.util.List;
  * Created by Roger on 2016/6/30.
  */
 public class Predict {
+    private static Logger logger = LoggerFactory.getLogger(Predict.class);
+
     private Command command = null;
     private List<String> months = null;
     private GenPredictService genPredictService = GenPredictService.getInstance();
 
     public Predict(String model, List<String> months, String modelPath) {
+        logger.info("edu.whu.irlab.mobile.Predict: model={}, file list size={}, modelPath={}", model, months.size(), modelPath);
         this.months = months;
         command = new Command();
         command.setMode(Command.MODE_PREDICT);
@@ -32,7 +39,8 @@ public class Predict {
         command.setPredictDataPath(dataPath);
 
         String cmd = command.getCommand();
-        System.out.println("INFO: cmd=" + cmd);
+        logger.info("predict edu.whu.irlab.mobile.command: {}", cmd);
+
         try {
             // 读取预测索引文件
             BufferedReader brIndex = new BufferedReader(new FileReader(dataPath+"index.txt"));
@@ -66,7 +74,7 @@ public class Predict {
             BufferedWriter bwError = null;
             if (!isStdOut){
                 String[] splitsDir = dataPath.split(File.separator);
-                File pyLogFile = FileUtil.getLogFile("py_predict."+ splitsDir[splitsDir.length-1]);
+                File pyLogFile = FileUtil.getLogFile("py_predict_error."+ splitsDir[splitsDir.length-1]);
                 bwError = new BufferedWriter(new FileWriter(pyLogFile));
             }
             BufferedReader brError = new BufferedReader(new InputStreamReader(pr.getErrorStream()));
@@ -89,7 +97,7 @@ public class Predict {
             BufferedWriter bwFinal = new BufferedWriter(new FileWriter(predictResultPath));
             for (String path: splitDataPath){
                 BufferedReader brSplit = new BufferedReader(new FileReader(dataPath+path));
-                String line = null;
+                String line;
                 while ((line=brSplit.readLine())!=null){
                     String tel = line.trim().split(",")[0];
                     if ((tmpResult=brTmp.readLine())!=null){
@@ -100,7 +108,7 @@ public class Predict {
             }
             bwFinal.close();
             brTmp.close();
-            System.out.println("预测结果保存的位置:"+predictResultPath);
+            logger.info("predict result path: {}", predictResultPath);
             // 删除predictTmpResultPath
             predictTmpResultFile.delete();
         } catch (IOException e) {
@@ -123,7 +131,7 @@ public class Predict {
         List<String> files = new ArrayList<>();
         files.add("201408.txt");
         files.add("201409.txt");
-        Predict predict = new Predict("linear", files, "/path/model");
+        edu.whu.irlab.mobile.Predict predict = new edu.whu.irlab.mobile.Predict("linear", files, "/path/model");
         predict.doPredict(true);
     }*/
 }

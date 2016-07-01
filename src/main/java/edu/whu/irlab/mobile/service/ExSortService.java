@@ -1,8 +1,10 @@
-package service;
+package edu.whu.irlab.mobile.service;
 
 import org.apache.commons.lang3.StringUtils;
-import props.ConfigProps;
-import util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.whu.irlab.mobile.props.ConfigProps;
+import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
 import java.util.*;
@@ -11,6 +13,7 @@ import java.util.*;
  * Created by Roger on 2016/6/29.
  */
 public class ExSortService {
+    private static Logger logger = LoggerFactory.getLogger(ExSortService.class);
 
     private static ExSortService instance = new ExSortService();
 
@@ -21,14 +24,8 @@ public class ExSortService {
 
     // 从大数据文件中, 一次缓冲读取的字节数(10M)
     // private static final int BUFFER_SIZE = 1024 * 1024 * 1;
-
-    // 存储子文件的临时目录
-    // private static final String TMP_DIR = "tmp";
-
     // 存储单行的字节数
     // private static final int LINE_SIZE = 2000;
-
-    // private static final String FILE_EXTENSION = ".txt";
 
     private ExSortService() {
     }
@@ -43,6 +40,7 @@ public class ExSortService {
      * @return 返回排序后的合并文件
      */
     public File sort(File bigDataFile) throws IOException {
+        logger.info("Start sorting: {}", bigDataFile.getAbsolutePath());
         List<File> splitFileList = splitFileData(bigDataFile);
         sortSplitFile(splitFileList);
         return mergeSplitFiles(splitFileList);
@@ -52,11 +50,11 @@ public class ExSortService {
      * 将大数据文件切分到几个小文件中
      */
     public List<File> splitFileData(File bigDataFile) throws IOException {
-        System.out.println("INFO: single file data sort!");
+        logger.info("Start splitting file data: {}", bigDataFile.getAbsolutePath());
         List<File> splitFileList = new ArrayList<>();
 
         BufferedReader br = new BufferedReader(new FileReader(bigDataFile));
-        String line = null;
+        String line;
         int lineCount = 0;
 
         File splitFile = FileUtil.getSplitFile();
@@ -83,17 +81,17 @@ public class ExSortService {
         if (br != null){
             br.close();
         }
-
+        logger.info("End splitting file data: {}, {} split files!", bigDataFile.getAbsolutePath(), splitFileList.size());
         return splitFileList;
     }
 
     /**
-     * 将大数据文件的单个子文件进行排序
+     * 将大数据文件的每个子文件进行排序
      *
      * @param splitFileList
      */
     public void sortSplitFile(List<File> splitFileList) throws IOException {
-        System.out.println("INFO: single file data sort!");
+        logger.info("Start sorting every single split file: size={}", splitFileList.size());
 
         for (File splitFile: splitFileList){
             BufferedReader br = new BufferedReader(new FileReader(splitFile));
@@ -119,6 +117,8 @@ public class ExSortService {
             }
             bw.close();
         }
+
+        logger.info("End sorting every single split file: size={}", splitFileList.size());
     }
 
     /**
@@ -127,15 +127,16 @@ public class ExSortService {
      * @param splitFileList
      */
     public File mergeSplitFiles(List<File> splitFileList) throws IOException {
+        logger.info("Start Merging every single sorted split file: size={}", splitFileList.size());
         File mergeFile = FileUtil.getMergeFile();
         File tmpFile = FileUtil.getTmpFile();
 
         boolean flag = false;
-        BufferedReader smallIn = null;
-        BufferedReader largeIn = null;
-        String smallLine = null;
-        String largeLine = null;
-        BufferedWriter mergeOut = null;
+        BufferedReader smallIn;
+        BufferedReader largeIn;
+        String smallLine;
+        String largeLine;
+        BufferedWriter mergeOut;
 
         for (File splitFile: splitFileList){
             smallIn = new BufferedReader(new FileReader(splitFile));
@@ -184,6 +185,7 @@ public class ExSortService {
 
         if (flag){
             mergeFile.delete();
+            logger.info("End Merging every single sorted split file: size={}", splitFileList.size());
             return tmpFile;
         }else {
             tmpFile.delete();

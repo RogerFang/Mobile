@@ -1,17 +1,25 @@
-package service;
+package edu.whu.irlab.mobile.service;
 
 import org.apache.commons.lang3.StringUtils;
-import util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by Roger on 2016/6/29.
  */
 public class PreprocessService {
+    private static Logger logger = LoggerFactory.getLogger(PreprocessService.class);
 
     private static PreprocessService instance = new PreprocessService();
+
+    private static ExSortService exSortService = ExSortService.getInstance();
 
     private boolean isTrain = true;
     private boolean isClassification = true;
@@ -30,9 +38,10 @@ public class PreprocessService {
      * @return 返回大数据文件集的交集记录
      */
     public File genData(List<File> bigDataFiles) throws IOException {
+        logger.info("Start preprocessing: exsort and generate intersection");
         List<File> sortedFileList = exSort(bigDataFiles);
         File interFile = genInterData(sortedFileList);
-        System.out.println("inter file:" + interFile.getName());
+        logger.info("Start preprocessing: exsort and generate intersection");
         return interFile;
     }
 
@@ -41,7 +50,7 @@ public class PreprocessService {
      * @param sortedFileList
      */
     private File genInterData(List<File> sortedFileList) throws IOException {
-        System.out.println("INFO: gen inter data from sorted file list!");
+        logger.info("Start generating intersection from the sorted file list");
         int interCount = 0;
 
         int fileListSize = sortedFileList.size();
@@ -132,6 +141,7 @@ public class PreprocessService {
             file.delete();
         }
 
+        logger.info("End generating intersection from the sorted file list, intersection file: {}", interFile.getAbsolutePath());
         return interFile;
     }
 
@@ -275,7 +285,6 @@ public class PreprocessService {
      * @return
      */
     private File exSort(File bigDataFile){
-        ExSortService exSortService = ExSortService.getInstance();
         try {
             return exSortService.sort(bigDataFile);
         } catch (IOException e) {
@@ -297,16 +306,8 @@ public class PreprocessService {
         return sortedFileList;
     }
 
-    public boolean isTrain() {
-        return isTrain;
-    }
-
     public void setIsTrain(boolean isTrain) {
         this.isTrain = isTrain;
-    }
-
-    public boolean isClassification() {
-        return isClassification;
     }
 
     public void setIsClassification(boolean isClassification) {

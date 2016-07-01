@@ -1,8 +1,10 @@
-package service;
+package edu.whu.irlab.mobile.service;
 
 import org.apache.commons.lang3.StringUtils;
-import props.ConfigProps;
-import util.FileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.whu.irlab.mobile.props.ConfigProps;
+import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -12,17 +14,19 @@ import java.util.List;
  * Created by Roger on 2016/6/29.
  */
 public class GenPredictService {
+    private static Logger logger = LoggerFactory.getLogger(GenPredictService.class);
+
     private static GenPredictService instance = new GenPredictService();
 
     private static ConfigProps configProps = ConfigProps.getInstance();
+
+    private PreprocessService preprocessService = PreprocessService.getInstance();
 
     // 大数据文件交集进行拆分后的子文件记录数
     public static final int FEATURE_SINGLE_FILE_COUNT = Integer.parseInt(configProps.getProp("FEATURE_SINGLE_FILE_COUNT"));
 
     // 本次预测存放最终索引特征数据的目录
     private String predictDirForThisTime;
-
-    private PreprocessService preprocessService = PreprocessService.getInstance();
 
     private GenPredictService(){
     }
@@ -32,14 +36,17 @@ public class GenPredictService {
     }
 
     public void genMultiMonth(List<String> months){
+        logger.info("Generate for edu.whu.irlab.mobile.Predict, file list size={}", months.size());
+
         List<File> files = new ArrayList<File>();
         for (String month: months){
             files.add(new File(month));
         }
 
         int N = months.size();
-        String dirName = files.get(N-1).getName().split("\\.")[0]+"_"+N;
+        String dirName = files.get(N-1).getName().split("\\.")[0] + "_" + N;
         makePredictDirForEveryTime(dirName);
+
         try {
             genPredictData(files, predictDirForThisTime);
         } catch (IOException e) {

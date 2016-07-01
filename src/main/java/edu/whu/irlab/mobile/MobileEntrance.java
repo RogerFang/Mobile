@@ -1,4 +1,6 @@
-import command.Command;
+package edu.whu.irlab.mobile;
+
+import edu.whu.irlab.mobile.command.Command;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +15,7 @@ public class MobileEntrance {
         List<String> inputList = Arrays.asList(args);
 
         if (inputList.contains("-help")){
-            System.out.println("please input command and params Sequentially, For example: -mode train -model linear -model_path /path/to -out true -files /path/201408.txt /path/201409.txt]");
+            System.out.println("please input edu.whu.irlab.mobile.command and params Sequentially, For example: -mode train -model linear -model_path /path/to -out true -files /path/201408.txt /path/201409.txt]");
             System.out.println("--1[mode]should be MODE train or predict");
             System.out.println("--2[model] should be MODEL linear,rmlp,cmlp,cnn or rnn");
             System.out.println("--3[model_path] should be the model path");
@@ -23,15 +25,15 @@ public class MobileEntrance {
         }
 
         if (!inputList.contains("-mode")){
-            System.out.println("please input [1] command '-mode' with value: train or predict!");
+            System.out.println("please input [1] edu.whu.irlab.mobile.command '-mode' with value: train or predict!");
             System.exit(0);
         }
         if (!inputList.contains("-model")){
-            System.out.println("please input [2] command '-model' with value: linear,rmlp,cmlp,cnn or rnn");
+            System.out.println("please input [2] edu.whu.irlab.mobile.command '-model' with value: linear,rmlp,cmlp,cnn or rnn");
             System.exit(0);
         }
         if (!inputList.contains("-model_path")){
-            System.out.println("please input [3] command '-model_path' with the path to save model in mode 'train' or use model in mode 'predict'!");
+            System.out.println("please input [3] edu.whu.irlab.mobile.command '-model_path' with the path to save model in mode 'train' or use model in mode 'predict'!");
             System.exit(0);
         }
         boolean isStdOut = true;

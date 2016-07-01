@@ -1,6 +1,6 @@
-package command;
+package edu.whu.irlab.mobile.command;
 
-import props.ConfigProps;
+import edu.whu.irlab.mobile.props.ConfigProps;
 
 import java.util.HashMap;
 import java.util.Map;

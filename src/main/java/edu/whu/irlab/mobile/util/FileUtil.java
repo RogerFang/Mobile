@@ -1,6 +1,6 @@
-package util;
+package edu.whu.irlab.mobile.util;
 
-import props.ConfigProps;
+import edu.whu.irlab.mobile.props.ConfigProps;
 
 import java.io.File;
 import java.io.IOException;
@@ -128,7 +128,7 @@ public class FileUtil {
         checkDirExists(TMP_DIR);
 
         String filePath = TMP_DIR + File.separator +prefix+ UUID.randomUUID()+FILE_EXTENSION;
-        System.out.println(filePath);
+        // System.out.println(filePath);
         File file = new File(filePath);
         if (!file.exists()){
             try {
