@@ -9,6 +9,8 @@
 *.ear
 target/*
 *.iml
+META-INF/*
+
 logs/*
 out
 logs/*

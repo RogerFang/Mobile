@@ -36,6 +36,10 @@ public class MobileEntrance {
             System.out.println("please input [3] edu.whu.irlab.mobile.command '-model_path' with the path to save model in mode 'train' or use model in mode 'predict'!");
             System.exit(0);
         }
+        if (!inputList.contains("-files")){
+            System.out.println("please input [4] edu.whu.irlab.mobile.command '-files' with the files path !");
+            System.exit(0);
+        }
         boolean isStdOut = true;
         if (inputList.contains("-out")){
             isStdOut = Boolean.valueOf(inputList.get(inputList.indexOf("-out") + 1));
