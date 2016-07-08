@@ -40,10 +40,10 @@ public class Predict {
 
         String cmd = command.getCommand();
         logger.info("predict edu.whu.irlab.mobile.command: {}", cmd);
-
+        System.out.println(dataPath + File.separator + "index.txt");
         try {
             // 读取预测索引文件
-            BufferedReader brIndex = new BufferedReader(new FileReader(dataPath+"index.txt"));
+            BufferedReader brIndex = new BufferedReader(new FileReader(dataPath + File.separator +"index.txt"));
             List<String> splitDataPath = new ArrayList<>();
             System.out.println(brIndex.readLine());
             System.out.println(brIndex.readLine());
@@ -93,10 +93,10 @@ public class Predict {
             // 将预测结果对应的电话号码添加到result
             BufferedReader brTmp = new BufferedReader(new FileReader(predictTmpResultFile));
             String tmpResult;
-            String predictResultPath = dataPath+"predict."+command.getModel()+".result";
+            String predictResultPath = dataPath + File.separator + "predict."+command.getModel()+".result";
             BufferedWriter bwFinal = new BufferedWriter(new FileWriter(predictResultPath));
             for (String path: splitDataPath){
-                BufferedReader brSplit = new BufferedReader(new FileReader(dataPath+path));
+                BufferedReader brSplit = new BufferedReader(new FileReader(dataPath+File.separator+path));
                 String line;
                 while ((line=brSplit.readLine())!=null){
                     String tel = line.trim().split(",")[0];
@@ -130,7 +130,7 @@ public class Predict {
     /*public static void main(String[] args) {
         List<String> files = new ArrayList<>();
         files.add("201408.txt");
-        files.add("201409.txt");
+//        files.add("201409.txt");
         edu.whu.irlab.mobile.Predict predict = new edu.whu.irlab.mobile.Predict("linear", files, "/path/model");
         predict.doPredict(true);
     }*/
