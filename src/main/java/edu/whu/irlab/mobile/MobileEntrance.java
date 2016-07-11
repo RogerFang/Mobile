@@ -5,6 +5,7 @@ import edu.whu.irlab.mobile.command.Command;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Roger on 2016/6/30.
@@ -53,14 +54,18 @@ public class MobileEntrance {
         }
 
         if (mode.equals(Command.MODE_TRAIN)){
+            Map<String, Object> rtnMap = null;
             if (model.equals(Command.MODEL_RNN)){
                 Train train = new Train(model, months, modelPath);
-                train.doTrain(isStdOut);
+                rtnMap = train.doTrain(isStdOut);
             }else {
                 for (int i=0; i<months.size()-1; i++){
                     Train train = new Train(model, months.subList(i, i+2), modelPath);
-                    train.doTrain(isStdOut);
+                    rtnMap = train.doTrain(isStdOut);
                 }
+            }
+            for (Map.Entry<String, Object> entry: rtnMap.entrySet()){
+                System.out.println("Train final: "+entry.getKey()+"\t"+entry.getValue());
             }
         }else {
             Predict predict = new Predict(model, months, modelPath);

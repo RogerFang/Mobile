@@ -7,7 +7,9 @@ import edu.whu.irlab.mobile.service.GenTrainService;
 import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Roger on 2016/6/30.
@@ -53,7 +55,9 @@ public class Train {
         logger.info("edu.whu.irlab.mobile.Train: model={}, file list size={}, modelPath={}", model, months.size(), modelPath);
     }
 
-    public void doTrain(boolean isStdOut){
+    public Map<String, Object> doTrain(boolean isStdOut){
+        Map<String, Object> rtnMap = new HashMap<>();
+
         if (isClassification){
             genTrainService.genClassification(months);
         }else {
@@ -66,6 +70,9 @@ public class Train {
 
         String cmd = command.getCommand();
         logger.info("predict edu.whu.irlab.mobile.command: {}", cmd);
+
+        boolean isCompleted = false;
+        String precision = null;
 
         try {
             BufferedWriter bw = null;
@@ -80,6 +87,15 @@ public class Train {
             BufferedReader brInput = new BufferedReader(new InputStreamReader(pr.getInputStream()));
             String lineInput;
             while ((lineInput=brInput.readLine())!=null){
+                if(lineInput.startsWith("test accuracy:")){
+                    precision = lineInput.split(":")[1];
+                    logger.info("Train Precision: {}", precision);
+                }
+
+                if (lineInput.trim().equals("training complete!")){
+                    isCompleted = true;
+                }
+
                 outputInfo(lineInput.trim(), bw);
             }
             brInput.close();
@@ -98,6 +114,10 @@ public class Train {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        rtnMap.put("isCompleted", isCompleted);
+        rtnMap.put("precision", precision);
+        return rtnMap;
     }
 
     private void outputInfo(String line, BufferedWriter bw) throws IOException {

@@ -15,15 +15,15 @@ public class ConfigProps {
     private ConfigProps(){
         props = new Properties();
         // jar包从外部读取配置文件
-        InputStream in = null;
+        /*InputStream in = null;
         try {
             in = new FileInputStream(new File("config.properties"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
+        }*/
 
         // 从classpath下读取配置文件
-//        InputStream in = this.getClass().getResourceAsStream("/config_local.properties");
+        InputStream in = this.getClass().getResourceAsStream("/config_local.properties");
         try {
             props.load(in);
         } catch (IOException e) {
