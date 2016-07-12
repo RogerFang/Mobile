@@ -23,7 +23,7 @@ public class ConfigProps {
         }*/
 
         // 从classpath下读取配置文件
-        InputStream in = this.getClass().getResourceAsStream("/config_local.properties");
+        InputStream in = this.getClass().getResourceAsStream("/config.properties");
         try {
             props.load(in);
         } catch (IOException e) {

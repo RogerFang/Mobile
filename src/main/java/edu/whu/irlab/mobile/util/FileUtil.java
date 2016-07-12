@@ -24,6 +24,9 @@ public class FileUtil {
     // 日志目录
     private static final String LOG_DIR = configProps.getProp("LOG_DIR");
 
+    //预测结果目录
+    private static final String PREDICT_RESULT_DIR = configProps.getProp("PREDICT_RESULT_DIR");
+
     // 文件扩展名
     private static final String FILE_EXTENSION = ".txt";
     // log文件扩展名
@@ -59,6 +62,24 @@ public class FileUtil {
      */
     public static File getInterTmpFile(){
         return getFileInTmpDir("inter_tmp_file_");
+    }
+
+    /**
+     * 获取预测结果临时文件
+     * @return
+     */
+    public static File getPredictResultTmpFile(){
+        return getFileInTmpDir("predict_tmp_result_");
+    }
+
+    /**
+     * 获取预测结果文件
+     * @param predictResultFileName
+     * @return
+     */
+    public static File getPredictResultFile(String predictResultFileName){
+        checkDirExists(PREDICT_RESULT_DIR);
+        return new File(PREDICT_RESULT_DIR + File.separator + predictResultFileName + FILE_EXTENSION);
     }
 
     /**

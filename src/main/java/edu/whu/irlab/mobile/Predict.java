@@ -33,7 +33,9 @@ public class Predict {
         }
     }
 
-    public void doPredict(boolean isStdOut){
+    public String doPredict(boolean isStdOut){
+        String resultPath = "";
+
         genPredictService.genMultiMonth(months);
         String dataPath = genPredictService.getPredictDirForThisTime();
         command.setPredictDataPath(dataPath);
@@ -56,7 +58,7 @@ public class Predict {
 
             // 执行python 脚本,并获取输入流
 
-            File predictTmpResultFile = new File(dataPath + File.separator + "tmp.result");
+            File predictTmpResultFile = FileUtil.getPredictResultTmpFile();
             Process pr = Runtime.getRuntime().exec(cmd);
             BufferedWriter bw = new BufferedWriter(new FileWriter(predictTmpResultFile));
 
@@ -93,8 +95,9 @@ public class Predict {
             // 将预测结果对应的电话号码添加到result
             BufferedReader brTmp = new BufferedReader(new FileReader(predictTmpResultFile));
             String tmpResult;
-            String predictResultPath = dataPath + File.separator + "predict."+command.getModel()+".result";
-            BufferedWriter bwFinal = new BufferedWriter(new FileWriter(predictResultPath));
+            String predictResultFileName = new File(dataPath).getName()+"_"+command.getModel()+".result";
+            File predictResultFile = FileUtil.getPredictResultFile(predictResultFileName);
+            BufferedWriter bwFinal = new BufferedWriter(new FileWriter(predictResultFile));
             for (String path: splitDataPath){
                 BufferedReader brSplit = new BufferedReader(new FileReader(dataPath+File.separator+path));
                 String line;
@@ -108,7 +111,8 @@ public class Predict {
             }
             bwFinal.close();
             brTmp.close();
-            logger.info("predict result path: {}", predictResultPath);
+            resultPath = predictResultFile.getAbsolutePath();
+            logger.info("predict result path: {}", predictResultFile.getAbsolutePath());
             // 删除predictTmpResultPath
             predictTmpResultFile.delete();
         } catch (IOException e) {
@@ -116,6 +120,8 @@ public class Predict {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        return resultPath;
     }
 
     private void outputInfo(String line, BufferedWriter bw) throws IOException {
