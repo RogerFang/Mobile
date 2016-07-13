@@ -42,7 +42,6 @@ public class Predict {
 
         String cmd = command.getCommand();
         logger.info("predict edu.whu.irlab.mobile.command: {}", cmd);
-        System.out.println(dataPath + File.separator + "index.txt");
         try {
             // 读取预测索引文件
             BufferedReader brIndex = new BufferedReader(new FileReader(dataPath + File.separator +"index.txt"));
