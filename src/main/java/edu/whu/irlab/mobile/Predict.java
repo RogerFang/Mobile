@@ -64,19 +64,31 @@ public class Predict {
 
             // 标准输出流 存到tmp.result
             BufferedReader br = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-            String lineResult;
+            String lineResult = br.readLine();
+            if (lineResult==null){
+                logger.info("Predict: nothing to return!");
+                return "";
+            }
+            while (lineResult!=null){
+                bw.write(lineResult);
+                bw.newLine();
+                lineResult = br.readLine();
+            }
+            bw.close();
+            br.close();
+
+            /*String lineResult;
             while ((lineResult=br.readLine())!=null){
                 bw.write(lineResult);
                 bw.newLine();
             }
             bw.close();
-            br.close();
+            br.close();*/
 
             // 错误输出流
             BufferedWriter bwError = null;
             if (!isStdOut){
-                String[] splitsDir = dataPath.split(File.separator);
-                File pyLogFile = FileUtil.getLogFile("py_predict_error."+ splitsDir[splitsDir.length-1]);
+                File pyLogFile = FileUtil.getLogFile("py_predict_error."+ new File(dataPath).getName());
                 bwError = new BufferedWriter(new FileWriter(pyLogFile));
             }
             BufferedReader brError = new BufferedReader(new InputStreamReader(pr.getErrorStream()));

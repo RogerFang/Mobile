@@ -77,8 +77,7 @@ public class Train {
         try {
             BufferedWriter bw = null;
             if (!isStdOut){
-                String[] splitsDir = trainDataPath.split(File.separator);
-                File pyLogFile = FileUtil.getLogFile("py_train_error."+ splitsDir[splitsDir.length-1]);
+                File pyLogFile = FileUtil.getLogFile("py_train_error."+ new File(trainDataPath).getName());
                 bw = new BufferedWriter(new FileWriter(pyLogFile));
             }
 
