@@ -7,6 +7,7 @@ import edu.whu.irlab.mobile.props.ConfigProps;
 import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 /**
@@ -40,16 +41,38 @@ public class ExSortService {
      * @return 返回排序后的合并文件
      */
     public File sort(File bigDataFile) throws IOException {
+        File sortedFile = FileUtil.getSortedFile(bigDataFile.getName());
+        if (sortedFile.exists()){
+            // 存在已排序文件
+            logger.info("Start sorting: existing sorted file, sorted file={}", sortedFile.getAbsolutePath());
+            return sortedFile;
+        }
+
         logger.info("Start sorting: {}", bigDataFile.getAbsolutePath());
         List<File> splitFileList = splitFileData(bigDataFile);
         sortSplitFile(splitFileList);
-        return mergeSplitFiles(splitFileList);
+        return mergeSplitFiles(splitFileList, bigDataFile.getName());
+    }
+
+    /**
+     * 针对传入的文件列表分别进行外部排序
+     * 1、判断是否已经存在该文件对应的已排序文件
+     * 2、存在则不再重复进行排序, 否则对其排序并保存下来供以后使用
+     * @param bigDataFileList
+     * @return
+     */
+    public List<File> sort(List<File> bigDataFileList) throws IOException {
+        List<File> sortedFileList = new ArrayList<>();
+        for (File originFile: bigDataFileList){
+            sortedFileList.add(sort(originFile));
+        }
+        return sortedFileList;
     }
 
     /**
      * 将大数据文件切分到几个小文件中
      */
-    public List<File> splitFileData(File bigDataFile) throws IOException {
+    private List<File> splitFileData(File bigDataFile) throws IOException {
         logger.info("Start splitting file data: {}", bigDataFile.getAbsolutePath());
         List<File> splitFileList = new ArrayList<>();
 
@@ -90,7 +113,7 @@ public class ExSortService {
      *
      * @param splitFileList
      */
-    public void sortSplitFile(List<File> splitFileList) throws IOException {
+    private void sortSplitFile(List<File> splitFileList) throws IOException {
         logger.info("Start sorting every single split file: size={}", splitFileList.size());
 
         for (File splitFile: splitFileList){
@@ -126,9 +149,9 @@ public class ExSortService {
      *
      * @param splitFileList
      */
-    public File mergeSplitFiles(List<File> splitFileList) throws IOException {
-        logger.info("Start Merging every single sorted split file: size={}", splitFileList.size());
-        File mergeFile = FileUtil.getMergeFile();
+    private File mergeSplitFiles(List<File> splitFileList, String bigDataFileName) throws IOException {
+        logger.info("Start Merging every single sorted split file: size={}, filename={}", splitFileList.size(), bigDataFileName);
+        File mergeFile = FileUtil.getMergeFile(bigDataFileName);
         File tmpFile = FileUtil.getTmpFile();
 
         boolean flag = false;
@@ -183,20 +206,32 @@ public class ExSortService {
             splitFile.delete();
         }
 
+        // 结果保存在临时文件中, 复制到mergeFile
         if (flag){
             mergeFile.delete();
-            logger.info("End Merging every single sorted split file: size={}", splitFileList.size());
-            return tmpFile;
-        }else {
-            tmpFile.delete();
-            return mergeFile;
+            FileChannel inputChannel = null;
+            FileChannel outputChannel = null;
+            try {
+                inputChannel = new FileInputStream(tmpFile).getChannel();
+                outputChannel = new FileOutputStream(mergeFile).getChannel();
+                outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+            } finally {
+                inputChannel.close();
+                outputChannel.close();
+            }
         }
+
+        tmpFile.delete();
+
+        logger.info("End Merging every single sorted split file: size={}, filename={}", splitFileList.size(), mergeFile.getName());
+        return mergeFile;
     }
 
 
     /*public static void main(String[] args) throws IOException {
-        ExSortService exSortService = new ExSortService();
-        File bigDataFile = new File("201412.txt");
-        exSortService.sort(bigDataFile);
+        // ExSortService exSortService = new ExSortService();
+        // File bigDataFile = new File("201408.txt");
+        // File sortedFile = exSortService.sort(bigDataFile);
+        // System.out.println(sortedFile.getAbsolutePath());
     }*/
 }

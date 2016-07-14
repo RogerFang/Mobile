@@ -12,6 +12,10 @@ import java.util.UUID;
 public class FileUtil {
 
     private static ConfigProps configProps = ConfigProps.getInstance();
+    // 存储数据文件的排序文件
+    private static final String SORTED_DIR = configProps.getProp("SORTED_DIR");
+
+    private static final String DATA_RAW_DIR = configProps.getProp("DATA_RAW_DIR");
 
     // 存储临时文件的目录
     private static final String TMP_DIR = configProps.getProp("TMP_DIR");
@@ -33,6 +37,15 @@ public class FileUtil {
     private static final String LOG_EXTENSION = ".log";
 
     /**
+     * 从data数据目录下获取文件
+     * @param filename
+     * @return
+     */
+    public static File getDataFile(String filename){
+        return new File(DATA_RAW_DIR + File.separator + filename);
+    }
+
+    /**
      * 获取子文件
      * @return
      */
@@ -44,8 +57,8 @@ public class FileUtil {
      * 获取合并文件
      * @return
      */
-    public static File getMergeFile(){
-        return getFileInTmpDir("merge_file_");
+    public static File getMergeFile(String bigDataFileName){
+        return getFileInDir(SORTED_DIR, bigDataFileName);
     }
 
     /**
@@ -64,6 +77,10 @@ public class FileUtil {
         return getFileInTmpDir("inter_tmp_file_");
     }
 
+    public static File getMobileTmpFile(){
+        return getFileInTmpDir("inter_mobile_");
+    }
+
     /**
      * 获取预测结果临时文件
      * @return
@@ -80,6 +97,10 @@ public class FileUtil {
     public static File getPredictResultFile(String predictResultFileName){
         checkDirExists(PREDICT_RESULT_DIR);
         return new File(PREDICT_RESULT_DIR + File.separator + predictResultFileName + FILE_EXTENSION);
+    }
+
+    public static File getSortedFile(String filename){
+        return new File(SORTED_DIR + File.separator + filename);
     }
 
     /**
@@ -136,6 +157,28 @@ public class FileUtil {
             file.mkdirs();
         }else {
             clearPath(file);
+        }
+        return file;
+    }
+
+    /**
+     * 根据目录和文件名返回file
+     * 删除已有文件,并返回新建文件
+     * @param dir
+     * @param filename
+     * @return
+     */
+    private static File getFileInDir(String dir, String filename){
+        checkDirExists(dir);
+        String filePath = dir + File.separator + filename;
+        File file = new File(filePath);
+        if (file.exists()){
+            file.delete();
+        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return file;
     }

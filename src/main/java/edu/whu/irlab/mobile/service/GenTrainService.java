@@ -42,7 +42,7 @@ public class GenTrainService {
      * @param months
      */
     public void genClassification(List<String> months){
-        logger.info("Generate for edu.whu.irlab.mobile.Train Classification, file list size={}", months.size());
+        logger.info("Generate for Train Classification, file list ={}", StringUtils.join(months, ","));
         genMultiMonth(months, true);
     }
 
@@ -51,7 +51,7 @@ public class GenTrainService {
      * @param months
      */
     public void genRegression(List<String> months){
-        logger.info("Generate for edu.whu.irlab.mobile.Train Regression, file list size={}", months.size());
+        logger.info("Generate for Train Regression, file list ={}", StringUtils.join(months, ","));
         genMultiMonth(months, false);
     }
 

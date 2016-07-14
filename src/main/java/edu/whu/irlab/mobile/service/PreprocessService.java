@@ -1,9 +1,10 @@
 package edu.whu.irlab.mobile.service;
 
+import edu.whu.irlab.mobile.util.CalendarUtil;
+import edu.whu.irlab.mobile.util.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.whu.irlab.mobile.util.FileUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -32,24 +33,165 @@ public class PreprocessService {
     }
 
     /**
-     * 传入原始的大数据文件
+     * 传入原始的大数据文件, 生成初始特征文件
      *
      * @param bigDataFiles 大数据文件列表
      * @return 返回大数据文件集的交集记录
      */
     public File genData(List<File> bigDataFiles) throws IOException {
         logger.info("Start preprocessing: exsort and generate intersection");
-        List<File> sortedFileList = exSort(bigDataFiles);
-        File interFile = genInterData(sortedFileList);
+        List<File> deriveDataFile = new ArrayList<>();
+        // 获取生成衍生特征数据所需的大数据文件
+        File firstFile = bigDataFiles.get(0);
+        String firstFilename = firstFile.getName();
+        String firstMonth = firstFilename.substring(0, 6);
+        String fileExtension = firstFilename.substring(6);
+        for (int i=0; i<4; i++){
+            String month = CalendarUtil.getLastMonth(firstMonth, i+1);
+            File monthFile = FileUtil.getDataFile(month + fileExtension);
+            if (!monthFile.exists()){
+                logger.info("Data file for generating derived feature doesn't exist!");
+                return null;
+            }
+            deriveDataFile.add(monthFile);
+        }
+
+        if (isTrain){
+            deriveDataFile.addAll(bigDataFiles.subList(0, bigDataFiles.size()-2));
+        }else {
+            deriveDataFile.addAll(bigDataFiles.subList(0, bigDataFiles.size()-1));
+        }
+
+        File initFile = genDataInit(bigDataFiles);
+
+        deriveDataFile.add(initFile);
+
+        File deriveFile = genDataDerive(deriveDataFile);
+
+        File mergeFile = mergeFeatureData(initFile, deriveFile);
         logger.info("Start preprocessing: exsort and generate intersection");
+        return mergeFile;
+    }
+
+    private File mergeFeatureData(File initFile, File deriveFile) throws IOException {
+        logger.info("Start merge feature data: initFile={}, deriveFile={}", initFile.getAbsolutePath(), deriveFile.getAbsolutePath());
+        BufferedReader brInit = new BufferedReader(new FileReader(initFile));
+        BufferedReader brDerive = new BufferedReader(new FileReader(deriveFile));
+
+        File mergeFile = FileUtil.getInterTmpFile();
+        BufferedWriter bw = new BufferedWriter(new FileWriter(mergeFile));
+        String lineInit = brInit.readLine();
+        String lineDerive = brDerive.readLine();;
+
+        while (lineInit != null){
+            if (lineDerive == null){
+                bw.write(lineInit);
+                bw.newLine();
+                lineInit = brInit.readLine();
+            }else {
+                String[] chunksInit = lineInit.split(";");
+                String[] chunksDerive = lineDerive.split(";");
+                if (chunksDerive[0].compareTo(chunksInit[0]) == 0){
+                    if (isTrain){
+                        for (int i=1; i<chunksInit.length-1; i++){
+                            String[] propsInit = chunksInit[i].split(",");
+                            String[] propsDerive1 = chunksDerive[1].split(",");
+                            String[] propsDerive2 = chunksDerive[2].split(",");
+                            // 前三个月数据
+                            int f1 = (Integer.valueOf(propsDerive1[i]) + Integer.valueOf(propsDerive1[i+1]) + Integer.valueOf(propsDerive1[i+2]))/3;
+
+                            String feature1;
+                            if (f1>4){
+                                feature1 = "1";
+                            }else {
+                                feature1 = "0";
+                            }
+
+                            // 前四个月数据
+                            double f2 = (Double.valueOf(propsDerive2[i-1]) + Double.valueOf(propsDerive2[i]) + Double.valueOf(propsDerive2[i+1]) + Double.valueOf(propsDerive2[i+2]))/4;
+                            double f = Double.valueOf(propsInit[propsInit.length - 1]);
+                            String feature2;
+                            if (f>f2){
+                                feature2 = "1";
+                            }else {
+                                feature2 = "0";
+                            }
+                            propsInit[propsInit.length -2] = feature1;
+                            propsInit[propsInit.length -1] = feature2;
+
+                            chunksInit[i] = StringUtils.join(propsInit, ",");
+                        }
+                    }else {
+                        // predict
+                    }
+
+                    bw.write(StringUtils.join(chunksInit, ","));
+                    bw.newLine();
+
+                    lineInit = brInit.readLine();
+                    lineDerive = brDerive.readLine();
+
+                }else if (chunksDerive[0].compareTo(chunksInit[0]) > 0){
+                    // brInit 往下读
+                    bw.write(lineInit);
+                    bw.newLine();
+                    lineInit = brInit.readLine();
+                }else if (chunksDerive[0].compareTo(chunksInit[0]) < 0){
+                    // brDerive 往下读
+                    lineDerive = brDerive.readLine();
+                }
+            }
+        }
+
+        if (brInit != null){
+            brInit.close();
+        }
+        if (brDerive != null){
+            brDerive.close();
+        }
+        if (bw != null){
+            bw.close();
+        }
+        logger.info("Final merge feature file: {}", mergeFile.getAbsolutePath());
+        return mergeFile;
+    }
+
+    /**
+     * 传入原始的大数据文件, 生成初始特征文件
+     *
+     * @param bigDataFiles 大数据文件列表
+     * @return 返回大数据文件集的交集记录
+     */
+    public File genDataInit(List<File> bigDataFiles) throws IOException {
+        logger.info("Start preprocessing init: exsort and generate intersection");
+        List<File> sortedFileList = exSortService.sort(bigDataFiles);
+        File interFile = genInterData(sortedFileList, false);
+        logger.info("Start preprocessing init: exsort and generate intersection");
+        return interFile;
+    }
+
+    /**
+     * 传入原始的大数据文件, 处理得到部分特征用于计算衍生数据
+     *
+     * @param bigDataFiles 大数据文件列表
+     * @return 返回大数据文件集的交集记录
+     */
+    public File genDataDerive(List<File> bigDataFiles) throws IOException {
+        logger.info("Start preprocessing for derive feature: exsort and generate intersection");
+        List<File> sortedFileList = exSortService.sort(bigDataFiles);
+        File interFile = genInterData(sortedFileList, true);
+        logger.info("Start preprocessing for derive feature: exsort and generate intersection");
         return interFile;
     }
 
     /**
      * 根据已排序的大数据文件列表, 生成交集数据
+     *
      * @param sortedFileList
+     * @param isDerived 是否用于生成衍生特征数据
+     * @return
      */
-    private File genInterData(List<File> sortedFileList) throws IOException {
+    private File genInterData(List<File> sortedFileList, boolean isDerived) throws IOException {
         logger.info("Start generating intersection from the sorted file list");
         int interCount = 0;
 
@@ -102,7 +244,7 @@ public class PreprocessService {
                 }
             }else {
                 // smallerList.size() == 0时, 表示mobiles都相等是交集, 写入交集文件
-                String featureRecord = getFeatureRecord(mobiles.get(0), lines);
+                String featureRecord = getFeatureRecord(mobiles.get(0), lines, isDerived);
                 if (featureRecord != null){
                     bw.write(featureRecord);
                     bw.newLine();
@@ -137,12 +279,16 @@ public class PreprocessService {
             }
         }
 
-        for (File file: sortedFileList){
-            file.delete();
-        }
-
         logger.info("End generating intersection from the sorted file list, intersection file: {}", interFile.getAbsolutePath());
         return interFile;
+    }
+
+    private String getFeatureRecord(String mobile, List<String> lines, boolean isDerived){
+        if (isDerived){
+            return getFeatureRecordDerive(mobile, lines);
+        }else {
+            return getFeatureRecordInit(mobile, lines);
+        }
     }
 
     /**
@@ -151,7 +297,7 @@ public class PreprocessService {
      * @param lines
      * @return
      */
-    private String getFeatureRecord(String mobile, List<String> lines){
+    private String getFeatureRecordInit(String mobile, List<String> lines){
         List<String> linesFeatureRecord = new ArrayList<>();
         linesFeatureRecord.add(mobile);
         int count = 0;
@@ -225,6 +371,18 @@ public class PreprocessService {
                 singleLineFeature.add(tmp);
             }
 
+            // 衍生的特征: 是否为代销商
+            if (props[15].equals("代销商")){
+                singleLineFeature.add("1");
+            }else {
+                singleLineFeature.add("0");
+            }
+
+            // 衍生特征: 是否前三个月月均用户通信对端手机号码数大于4
+            singleLineFeature.add(props[74]);
+            //衍生特征: 当月漫游通话与前4个月的平均值相比是否增加
+            singleLineFeature.add(props[25]);
+
             if (count == lines.size()-1){
                 if (isTrain){
                     // train&test
@@ -250,8 +408,33 @@ public class PreprocessService {
             count++;
 
         }
-        // System.out.println(linesFeatureRecord.size());
-        return StringUtils.join(linesFeatureRecord, ",");
+        return StringUtils.join(linesFeatureRecord, ";");
+    }
+
+    /**
+     * 生成衍生特征
+     *
+     * @param mobile
+     * @param lines
+     * @return
+     */
+    private String getFeatureRecordDerive(String mobile, List<String> lines){
+        List<String> linesFeatureRecord = new ArrayList<>();
+        List<String> props1 = new ArrayList<>();
+        List<String> props2 = new ArrayList<>();
+        linesFeatureRecord.add(mobile);
+        for (int i=0; i<lines.size()-1; i++){
+            String[] props = lines.get(i).split(",");
+            // 第一个特征:用户通信对端手机号码数
+            props1.add(props[74]);
+
+            // 第二个特征:漫游通话费
+            props2.add(props[25]);
+
+        }
+        linesFeatureRecord.add(StringUtils.join(props1, ","));
+        linesFeatureRecord.add(StringUtils.join(props2, ","));
+        return StringUtils.join(linesFeatureRecord, ";");
     }
 
     /**
@@ -278,33 +461,7 @@ public class PreprocessService {
         return smallerIds;
     }
 
-    /**
-     * 返回排序后的大数据文件
-     *
-     * @param bigDataFile
-     * @return
-     */
-    private File exSort(File bigDataFile){
-        try {
-            return exSortService.sort(bigDataFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
-    /**
-     * 针对传入的文件列表分别进行外部排序
-     * @param bigDataFileList
-     * @return
-     */
-    private List<File> exSort(List<File> bigDataFileList){
-        List<File> sortedFileList = new ArrayList<>();
-        for (File originFile: bigDataFileList){
-            sortedFileList.add(exSort(originFile));
-        }
-        return sortedFileList;
-    }
 
     public void setIsTrain(boolean isTrain) {
         this.isTrain = isTrain;
@@ -314,11 +471,18 @@ public class PreprocessService {
         this.isClassification = isClassification;
     }
 
-    /*public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         PreprocessService preprocessService = new PreprocessService();
         List<File> fileList = new ArrayList<>();
-        fileList.add(new File("201408.txt"));
-        fileList.add(new File("201409.txt"));
+        fileList.add(new File("E:\\data\\raw\\201412.txt"));
+        fileList.add(new File("E:\\data\\raw\\201501.txt"));
+        fileList.add(new File("E:\\data\\raw\\201502.txt"));
+        // fileList.add(new File("E:\\data\\feature\\tmp\\inter_tmp_file_00607e8a-0211-43ec-9eca-208efaabe377.txt"));
+        // preprocessService.genData(fileList);
+        // preprocessService.genDataInit(fileList);
+        // preprocessService.genDataDerive(fileList);
+
+
         preprocessService.genData(fileList);
-    }*/
+    }
 }
