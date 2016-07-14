@@ -61,6 +61,10 @@ public class FileUtil {
         return getFileInDir(SORTED_DIR, bigDataFileName);
     }
 
+    public static File getMergeFile(){
+        return getFileInTmpDir("merge_");
+    }
+
     /**
      * 获取临时文件
      * @return

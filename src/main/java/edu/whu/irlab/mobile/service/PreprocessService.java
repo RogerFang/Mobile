@@ -64,12 +64,13 @@ public class PreprocessService {
 
         File initFile = genDataInit(bigDataFiles);
 
-        deriveDataFile.add(initFile);
-
-        File deriveFile = genDataDerive(deriveDataFile);
+        File deriveFile = genDataDerive(deriveDataFile, initFile);
 
         File mergeFile = mergeFeatureData(initFile, deriveFile);
-        logger.info("Start preprocessing: exsort and generate intersection");
+
+        initFile.delete();
+        deriveFile.delete();
+        logger.info("End preprocessing: exsort and generate intersection");
         return mergeFile;
     }
 
@@ -81,7 +82,7 @@ public class PreprocessService {
         File mergeFile = FileUtil.getInterTmpFile();
         BufferedWriter bw = new BufferedWriter(new FileWriter(mergeFile));
         String lineInit = brInit.readLine();
-        String lineDerive = brDerive.readLine();;
+        String lineDerive = brDerive.readLine();
 
         while (lineInit != null){
             if (lineDerive == null){
@@ -92,37 +93,40 @@ public class PreprocessService {
                 String[] chunksInit = lineInit.split(";");
                 String[] chunksDerive = lineDerive.split(";");
                 if (chunksDerive[0].compareTo(chunksInit[0]) == 0){
+                    int endIndex;
                     if (isTrain){
-                        for (int i=1; i<chunksInit.length-1; i++){
-                            String[] propsInit = chunksInit[i].split(",");
-                            String[] propsDerive1 = chunksDerive[1].split(",");
-                            String[] propsDerive2 = chunksDerive[2].split(",");
-                            // 前三个月数据
-                            int f1 = (Integer.valueOf(propsDerive1[i]) + Integer.valueOf(propsDerive1[i+1]) + Integer.valueOf(propsDerive1[i+2]))/3;
-
-                            String feature1;
-                            if (f1>4){
-                                feature1 = "1";
-                            }else {
-                                feature1 = "0";
-                            }
-
-                            // 前四个月数据
-                            double f2 = (Double.valueOf(propsDerive2[i-1]) + Double.valueOf(propsDerive2[i]) + Double.valueOf(propsDerive2[i+1]) + Double.valueOf(propsDerive2[i+2]))/4;
-                            double f = Double.valueOf(propsInit[propsInit.length - 1]);
-                            String feature2;
-                            if (f>f2){
-                                feature2 = "1";
-                            }else {
-                                feature2 = "0";
-                            }
-                            propsInit[propsInit.length -2] = feature1;
-                            propsInit[propsInit.length -1] = feature2;
-
-                            chunksInit[i] = StringUtils.join(propsInit, ",");
-                        }
+                        endIndex = chunksInit.length - 1;
                     }else {
-                        // predict
+                        endIndex = chunksInit.length;
+                    }
+
+                    for (int i=1; i<endIndex; i++){
+                        String[] propsInit = chunksInit[i].split(",");
+                        String[] propsDerive1 = chunksDerive[1].split(",");
+                        String[] propsDerive2 = chunksDerive[2].split(",");
+                        // 前三个月数据
+                        int f1 = (Integer.valueOf(propsDerive1[i]) + Integer.valueOf(propsDerive1[i+1]) + Integer.valueOf(propsDerive1[i+2]))/3;
+
+                        String feature1;
+                        if (f1>4){
+                            feature1 = "1";
+                        }else {
+                            feature1 = "0";
+                        }
+
+                        // 前四个月数据
+                        double f2 = (Double.valueOf(propsDerive2[i-1]) + Double.valueOf(propsDerive2[i]) + Double.valueOf(propsDerive2[i+1]) + Double.valueOf(propsDerive2[i+2]))/4;
+                        double f = Double.valueOf(propsInit[propsInit.length - 1]);
+                        String feature2;
+                        if (f>f2){
+                            feature2 = "1";
+                        }else {
+                            feature2 = "0";
+                        }
+                        propsInit[propsInit.length -2] = feature1;
+                        propsInit[propsInit.length -1] = feature2;
+
+                        chunksInit[i] = StringUtils.join(propsInit, ",");
                     }
 
                     bw.write(StringUtils.join(chunksInit, ","));
@@ -163,10 +167,10 @@ public class PreprocessService {
      * @return 返回大数据文件集的交集记录
      */
     public File genDataInit(List<File> bigDataFiles) throws IOException {
-        logger.info("Start preprocessing init: exsort and generate intersection");
-        List<File> sortedFileList = exSortService.sort(bigDataFiles);
+        logger.info("Start genDataInit: exsort and generate intersection");
+        List<File> sortedFileList = exSortService.sortFlexible(bigDataFiles);
         File interFile = genInterData(sortedFileList, false);
-        logger.info("Start preprocessing init: exsort and generate intersection");
+        logger.info("End genDataInit!");
         return interFile;
     }
 
@@ -176,11 +180,12 @@ public class PreprocessService {
      * @param bigDataFiles 大数据文件列表
      * @return 返回大数据文件集的交集记录
      */
-    public File genDataDerive(List<File> bigDataFiles) throws IOException {
-        logger.info("Start preprocessing for derive feature: exsort and generate intersection");
-        List<File> sortedFileList = exSortService.sort(bigDataFiles);
+    public File genDataDerive(List<File> bigDataFiles, File initFile) throws IOException {
+        logger.info("Start genDataDerive: exsort and generate intersection");
+        List<File> sortedFileList = exSortService.sortFlexible(bigDataFiles);
+        sortedFileList.add(initFile);
         File interFile = genInterData(sortedFileList, true);
-        logger.info("Start preprocessing for derive feature: exsort and generate intersection");
+        logger.info("Start genDataDerive!");
         return interFile;
     }
 
@@ -469,20 +474,5 @@ public class PreprocessService {
 
     public void setIsClassification(boolean isClassification) {
         this.isClassification = isClassification;
-    }
-
-    public static void main(String[] args) throws IOException {
-        PreprocessService preprocessService = new PreprocessService();
-        List<File> fileList = new ArrayList<>();
-        fileList.add(new File("E:\\data\\raw\\201412.txt"));
-        fileList.add(new File("E:\\data\\raw\\201501.txt"));
-        fileList.add(new File("E:\\data\\raw\\201502.txt"));
-        // fileList.add(new File("E:\\data\\feature\\tmp\\inter_tmp_file_00607e8a-0211-43ec-9eca-208efaabe377.txt"));
-        // preprocessService.genData(fileList);
-        // preprocessService.genDataInit(fileList);
-        // preprocessService.genDataDerive(fileList);
-
-
-        preprocessService.genData(fileList);
     }
 }

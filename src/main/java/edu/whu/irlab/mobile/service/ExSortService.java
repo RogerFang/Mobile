@@ -38,20 +38,33 @@ public class ExSortService {
     /**
      * 大数据文件外部排序入口
      * @param bigDataFile 大数据文件
+     * @param isFixed 是否将最终合并排序文件存储在固定目录
      * @return 返回排序后的合并文件
      */
-    public File sort(File bigDataFile) throws IOException {
-        File sortedFile = FileUtil.getSortedFile(bigDataFile.getName());
-        if (sortedFile.exists()){
-            // 存在已排序文件
-            logger.info("Start sorting: existing sorted file, sorted file={}", sortedFile.getAbsolutePath());
-            return sortedFile;
-        }
-
+    public File sort(File bigDataFile, boolean isFixed) throws IOException {
         logger.info("Start sorting: {}", bigDataFile.getAbsolutePath());
         List<File> splitFileList = splitFileData(bigDataFile);
         sortSplitFile(splitFileList);
-        return mergeSplitFiles(splitFileList, bigDataFile.getName());
+        if (isFixed){
+            return mergeSplitFilesInFixed(splitFileList, bigDataFile.getName());
+        }else {
+            return mergeSplitFilesInTmp(splitFileList);
+        }
+    }
+
+    /**
+     * 针对传入的文件列表分别进行外部排序
+     * 对每个文件都进行排序
+     * @param bigDataFileList
+     * @return
+     * @throws IOException
+     */
+    public List<File> sortForcible(List<File> bigDataFileList) throws IOException {
+        List<File> sortedFileList = new ArrayList<>();
+        for (File originFile: bigDataFileList){
+            sortedFileList.add(sort(originFile, false));
+        }
+        return sortedFileList;
     }
 
     /**
@@ -61,10 +74,17 @@ public class ExSortService {
      * @param bigDataFileList
      * @return
      */
-    public List<File> sort(List<File> bigDataFileList) throws IOException {
+    public List<File> sortFlexible(List<File> bigDataFileList) throws IOException {
         List<File> sortedFileList = new ArrayList<>();
         for (File originFile: bigDataFileList){
-            sortedFileList.add(sort(originFile));
+            File sortedFile = FileUtil.getSortedFile(originFile.getName());
+            if (sortedFile.exists()){
+                // 存在已排序文件
+                logger.info("Start sorting: existing sorted file, sorted file={}", sortedFile.getAbsolutePath());
+                sortedFileList.add(sortedFile);
+            }else {
+                sortedFileList.add(sort(originFile, true));
+            }
         }
         return sortedFileList;
     }
@@ -114,7 +134,7 @@ public class ExSortService {
      * @param splitFileList
      */
     private void sortSplitFile(List<File> splitFileList) throws IOException {
-        logger.info("Start sorting every single split file: size={}", splitFileList.size());
+        logger.info("Start sortSplitFile: size={}", splitFileList.size());
 
         for (File splitFile: splitFileList){
             BufferedReader br = new BufferedReader(new FileReader(splitFile));
@@ -141,19 +161,73 @@ public class ExSortService {
             bw.close();
         }
 
-        logger.info("End sorting every single split file: size={}", splitFileList.size());
+        logger.info("End sortSplitFile: size={}", splitFileList.size());
+    }
+
+    /**
+     * 对已排序的子文件进行合并
+     * 将合并文件存储到固定的文件目录
+     *
+     * @param splitFileList
+     */
+    private File mergeSplitFilesInFixed(List<File> splitFileList, String bigDataFileName) throws IOException {
+        logger.info("Start mergeSplitFilesInFixed: size={}, filename={}", splitFileList.size(), bigDataFileName);
+        File mergeFile = FileUtil.getMergeFile(bigDataFileName);
+        File tmpFile = FileUtil.getTmpFile();
+
+        boolean flag = mergeSplitFiles(splitFileList, mergeFile, tmpFile);
+
+        // 结果保存在临时文件中, 复制到mergeFile
+        if (flag){
+            // mergeFile.delete();
+            FileChannel inputChannel = null;
+            FileChannel outputChannel = null;
+            try {
+                inputChannel = new FileInputStream(tmpFile).getChannel();
+                outputChannel = new FileOutputStream(mergeFile).getChannel();
+                outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+            } finally {
+                inputChannel.close();
+                outputChannel.close();
+            }
+        }
+
+        tmpFile.delete();
+
+        logger.info("End mergeSplitFilesInFixed: size={}, filename={}", splitFileList.size(), mergeFile.getAbsolutePath());
+        return mergeFile;
+    }
+
+    /**
+     * 对已排序的子文件进行合并
+     * 将合并文件存储到临时文件目录
+     *
+     * @param splitFileList
+     */
+    private File mergeSplitFilesInTmp(List<File> splitFileList) throws IOException {
+        logger.info("Start mergeSplitFilesInTmp: size={}", splitFileList.size());
+        File mergeFile = FileUtil.getMergeFile();
+        File tmpFile = FileUtil.getMergeFile();
+
+        boolean flag = mergeSplitFiles(splitFileList, mergeFile, tmpFile);
+
+        if (flag){
+            // 结果保存在临时文件中
+            mergeFile.delete();
+            logger.info("End mergeSplitFilesInTmp: size={}, filename={}", splitFileList.size(), tmpFile.getAbsolutePath());
+            return tmpFile;
+        }else {
+            tmpFile.delete();
+            logger.info("End mergeSplitFilesInTmp: size={}, filename={}", splitFileList.size(), mergeFile.getAbsolutePath());
+            return mergeFile;
+        }
     }
 
     /**
      * 对已排序的子文件进行合并
      *
-     * @param splitFileList
      */
-    private File mergeSplitFiles(List<File> splitFileList, String bigDataFileName) throws IOException {
-        logger.info("Start Merging every single sorted split file: size={}, filename={}", splitFileList.size(), bigDataFileName);
-        File mergeFile = FileUtil.getMergeFile(bigDataFileName);
-        File tmpFile = FileUtil.getTmpFile();
-
+    private boolean mergeSplitFiles(List<File> splitFileList, File mergeFile, File tmpFile) throws IOException {
         boolean flag = false;
         BufferedReader smallIn;
         BufferedReader largeIn;
@@ -205,33 +279,6 @@ public class ExSortService {
 
             splitFile.delete();
         }
-
-        // 结果保存在临时文件中, 复制到mergeFile
-        if (flag){
-            mergeFile.delete();
-            FileChannel inputChannel = null;
-            FileChannel outputChannel = null;
-            try {
-                inputChannel = new FileInputStream(tmpFile).getChannel();
-                outputChannel = new FileOutputStream(mergeFile).getChannel();
-                outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
-            } finally {
-                inputChannel.close();
-                outputChannel.close();
-            }
-        }
-
-        tmpFile.delete();
-
-        logger.info("End Merging every single sorted split file: size={}, filename={}", splitFileList.size(), mergeFile.getName());
-        return mergeFile;
+        return flag;
     }
-
-
-    /*public static void main(String[] args) throws IOException {
-        // ExSortService exSortService = new ExSortService();
-        // File bigDataFile = new File("201408.txt");
-        // File sortedFile = exSortService.sort(bigDataFile);
-        // System.out.println(sortedFile.getAbsolutePath());
-    }*/
 }
