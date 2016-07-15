@@ -85,12 +85,12 @@ public class PreprocessService {
         String lineDerive = brDerive.readLine();
 
         while (lineInit != null){
+            String[] chunksInit = lineInit.split(";");
             if (lineDerive == null){
-                bw.write(lineInit);
+                bw.write(StringUtils.join(chunksInit, ","));
                 bw.newLine();
                 lineInit = brInit.readLine();
             }else {
-                String[] chunksInit = lineInit.split(";");
                 String[] chunksDerive = lineDerive.split(";");
                 if (chunksDerive[0].compareTo(chunksInit[0]) == 0){
                     int endIndex;
@@ -137,7 +137,7 @@ public class PreprocessService {
 
                 }else if (chunksDerive[0].compareTo(chunksInit[0]) > 0){
                     // brInit 往下读
-                    bw.write(lineInit);
+                    bw.write(StringUtils.join(chunksInit, ","));
                     bw.newLine();
                     lineInit = brInit.readLine();
                 }else if (chunksDerive[0].compareTo(chunksInit[0]) < 0){
