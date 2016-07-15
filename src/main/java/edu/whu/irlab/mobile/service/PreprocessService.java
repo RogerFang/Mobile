@@ -348,16 +348,25 @@ public class PreprocessService {
                 }
 
                 // 销售渠道
-                if (tmp.equals("代销商")){
+                /*if (tmp.equals("代销商")){
                     tmp = "0";
                 }else if (tmp.equals("零售店")){
                     tmp = "1";
                 }else if (tmp.equals("营业厅")){
                     tmp = "2";
+                }*/
+                if (tmp.equals("代销商")){
+                    tmp = "1,0,0";
+                }
+                if (tmp.equals("零售店")){
+                    tmp = "0,1,0";
+                }
+                if (tmp.equals("营业厅")){
+                    tmp = "0,0,1";
                 }
 
                 // 付款方式
-                if (tmp.equals("现金")){
+                /*if (tmp.equals("现金")){
                     tmp = "1";
                 }else if (tmp.equals("借记卡")){
                     tmp = "2";
@@ -371,17 +380,38 @@ public class PreprocessService {
                     tmp = "6";
                 }else if (tmp.equals("级别不详")){
                     tmp = "0";
+                }*/
+                if (tmp.equals("现金")){
+                    tmp = "1,0,0,0,0";
+                }
+                if (tmp.equals("借记卡")){
+                    tmp = "0,1,0,0,0";
+                }
+                if (tmp.equals("银行托收")){
+                    tmp = "0,0,1,0,0";
+                }
+                if (tmp.equals("信用卡")){
+                    tmp = "0,0,0,1,0";
+                }if (tmp.equals("支票")){
+                    tmp = "0,0,0,0,1";
+                }
+                if (tmp.equals("未知")){
+                    tmp = "0,0,0,0,0";
+                }
+
+                if (tmp.equals("级别不详")){
+                    tmp = "0";
                 }
 
                 singleLineFeature.add(tmp);
             }
 
             // 衍生的特征: 是否为代销商
-            if (props[15].equals("代销商")){
+            /*if (props[15].equals("代销商")){
                 singleLineFeature.add("1");
             }else {
                 singleLineFeature.add("0");
-            }
+            }*/
 
             // 衍生特征: 是否前三个月月均用户通信对端手机号码数大于4
             singleLineFeature.add(props[74]);
@@ -411,7 +441,6 @@ public class PreprocessService {
             }
 
             count++;
-
         }
         return StringUtils.join(linesFeatureRecord, ";");
     }
