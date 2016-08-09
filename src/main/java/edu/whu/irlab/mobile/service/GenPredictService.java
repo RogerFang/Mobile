@@ -55,8 +55,7 @@ public class GenPredictService {
     }
 
     private void genPredictData(List<File> bigDataFiles, String predictDirForThisTime) throws IOException {
-        preprocessService.setIsTrain(false);
-        File interFile = preprocessService.genData(bigDataFiles);
+        File interFile = preprocessService.genData(bigDataFiles, false);
         BufferedReader br = new BufferedReader(new FileReader(interFile));
 
         List<String> splitFileRecords = new ArrayList<>();
@@ -125,12 +124,11 @@ public class GenPredictService {
         return predictDirForThisTime;
     }
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         List<String> files = new ArrayList<>();
-        files.add("201408.txt");
-        files.add("201409.txt");
+        files.add("201502.txt");
         GenPredictService genPredictService = new GenPredictService();
         genPredictService.genMultiMonth(files);
         System.out.println(genPredictService.getPredictDirForThisTime());
-    }*/
+    }
 }

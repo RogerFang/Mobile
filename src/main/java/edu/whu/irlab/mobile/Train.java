@@ -1,6 +1,8 @@
 package edu.whu.irlab.mobile;
 
 import edu.whu.irlab.mobile.command.Command;
+import edu.whu.irlab.mobile.props.ConfigProps;
+import edu.whu.irlab.mobile.service.PreprocessOriginService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.whu.irlab.mobile.service.GenTrainService;
@@ -22,6 +24,8 @@ public class Train {
     private GenTrainService genTrainService = GenTrainService.getInstance();
     private boolean isClassification;
 
+    private static ConfigProps configProps = ConfigProps.getInstance();
+
     public Train(String model, List<String> months, String modelPath) {
         this.months = months;
         command = new Command();
@@ -35,10 +39,10 @@ public class Train {
 
         if (model.equals(Command.MODEL_RNN)){
             // 回归RNN至少需要三个月的数据
-            if (months.size() < 3){
-                throw new RuntimeException("the input months List size must be at least 3 in model " + model);
+            if (months.size() < Integer.valueOf(configProps.getProp("numSteps"))+1){
+                throw new RuntimeException("the input months List size must be at least "+ Integer.valueOf(configProps.getProp("numSteps"))+1 +" in model " + model);
             }
-            isClassification = false;
+            isClassification = true;
         }else if (model.equals(Command.MODEL_RMLP)){
             // 回归
             isClassification = false;
@@ -48,9 +52,9 @@ public class Train {
             throw new RuntimeException("the input 'model' must be in: " + Command.MODEL_LINEAR + "," + Command.MODEL_CMLP + "," + Command.MODEL_CNN + "," + Command.MODEL_RMLP + "," +Command.MODEL_RNN);
         }
 
-        if (months.size() != 2){
+        /*if (months.size() != 2){
             throw new RuntimeException("the input months List size must be 2 in model " + model);
-        }
+        }*/
 
         logger.info("edu.whu.irlab.mobile.Train: model={}, file list size={}, modelPath={}", model, months.size(), modelPath);
     }
@@ -116,6 +120,8 @@ public class Train {
 
         rtnMap.put("isCompleted", isCompleted);
         rtnMap.put("precision", precision);
+
+        // System.out.println("--------------removeIndex:"+ PreprocessOriginService.getRemoveIndex()+"--------------------");
         return rtnMap;
     }
 

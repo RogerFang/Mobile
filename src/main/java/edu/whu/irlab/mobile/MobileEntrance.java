@@ -1,6 +1,8 @@
 package edu.whu.irlab.mobile;
 
 import edu.whu.irlab.mobile.command.Command;
+import edu.whu.irlab.mobile.props.ConfigProps;
+import edu.whu.irlab.mobile.service.PreprocessOriginService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +13,7 @@ import java.util.Map;
  * Created by Roger on 2016/6/30.
  */
 public class MobileEntrance {
+    private static ConfigProps configProps = ConfigProps.getInstance();
 
     public static void main(String[] args) {
         List<String> inputList = Arrays.asList(args);
@@ -56,8 +59,10 @@ public class MobileEntrance {
         if (mode.equals(Command.MODE_TRAIN)){
             Map<String, Object> rtnMap = null;
             if (model.equals(Command.MODEL_RNN)){
-                Train train = new Train(model, months, modelPath);
-                rtnMap = train.doTrain(isStdOut);
+                for (int i=0; i< (months.size()-Integer.valueOf(configProps.getProp("numSteps"))); i++){
+                    Train train = new Train(model, months.subList(i, i+Integer.valueOf(configProps.getProp("numSteps"))+1), modelPath);
+                    rtnMap = train.doTrain(isStdOut);
+                }
             }else {
                 for (int i=0; i<months.size()-1; i++){
                     Train train = new Train(model, months.subList(i, i+2), modelPath);

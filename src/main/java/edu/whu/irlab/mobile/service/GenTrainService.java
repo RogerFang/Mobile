@@ -78,9 +78,7 @@ public class GenTrainService {
     }
 
     private void genTrainAndTestData(List<File> bigDataFiles, boolean isClassification) throws IOException {
-        preprocessService.setIsTrain(true);
-        preprocessService.setIsClassification(isClassification);
-        File interFile = preprocessService.genData(bigDataFiles);
+        File interFile = preprocessService.genData(bigDataFiles, true, isClassification);
         BufferedReader br = new BufferedReader(new FileReader(interFile));
 
         List<String> splitFileRecordsTrain = new ArrayList<>();
@@ -108,7 +106,7 @@ public class GenTrainService {
         while ((line=br.readLine()) != null){
             if (StringUtils.isNotEmpty(line)){
 
-                if (allCount%10 == 0){
+                if (allCount%20 == 0){
                     // test数据
                     bwTest.write(line);
                     bwTest.newLine();
